@@ -20,9 +20,13 @@ class BasicBlock(object):
         else:
             self.instrs = []
         try:
-            self.target = self.instrs[-1].target
+            # if the last instuction is a call, the BB doesn't have a target
+            if self.instrs[-1].returns == True:
+                self.target = None
+            else:
+                self.target = self.instrs[-1].target
         except Exception:
-            self.target = None
+            self.target = None # last instruction is not a branch
         if labels:
             self.labels = labels
         else:
