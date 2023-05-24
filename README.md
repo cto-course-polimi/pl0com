@@ -55,7 +55,9 @@ you want to run the compiled code on real hardware.
 
 #### Step 2: Compile a program with `pl0com`
 
-First, place the program to be compiled at the end of `lexer.py` unless you
+You can either:
+
++ place the program to be compiled at the end of `lexer.py` unless you
 are happy with the shitty test program that is already there. Note that such
 shitty test program is the only program the compiler is guaranteed to
 be able to compile correctly.
@@ -64,6 +66,15 @@ Then, produce an assembly file from the compiler by invoking it:
 
 ```sh
 $ ./main.py out.s
+```
+
++ place the code in a separate file. You can find two sample program in
+the ./samples directory.
+
+Then, produce an assembly file from the compiler by invoking it:
+
+```sh
+$ ./main.py <path-of-the-file> out.s
 ```
 
 #### Step 3: Link the program with the runtime library
