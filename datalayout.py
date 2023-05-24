@@ -46,7 +46,11 @@ def perform_data_layout_of_function(funcroot):
         bsize = var.stype.size // 8
         offs -= bsize
         var.set_alloc_info(LocalSymbolLayout(prefix + var.name, offs, bsize))
+
     funcroot.body.stackroom = -offs
+
+    for defin in funcroot.body.defs.children:
+        perform_data_layout_of_function(defin)
 
 
 def perform_data_layout_of_program(root):
