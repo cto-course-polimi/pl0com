@@ -81,7 +81,7 @@ class Parser:
         if self.accept('number'):
             return ir.Const(value=int(self.value), symtab=symtab)
         elif self.accept('lparen'):
-            expr = self.expression()
+            expr = self.expression(symtab=symtab)
             self.expect('rparen')
             return expr
         else:
