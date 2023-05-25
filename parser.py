@@ -199,12 +199,12 @@ class Parser:
             # make sure to save and restore the current function while parsing the new one
             parent = self.current_function
             self.current_function = fname
-            fbody = self.block(ir.SymbolTable(symtab[:] + local_vars))
+            fbody = self.block(ir.SymbolTable(local_vars + symtab[:]))
             self.current_function = parent
 
             self.expect('semicolon')
             defs.append(ir.FunctionDef(symbol=local_vars.find(fname), body=fbody))
-        stat = self.statement(ir.SymbolTable(symtab[:] + local_vars))
+        stat = self.statement(ir.SymbolTable(local_vars + symtab[:]))
         return ir.Block(gl_sym=symtab, lc_sym=local_vars, defs=defs, body=stat)
 
     @logger
