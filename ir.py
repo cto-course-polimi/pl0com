@@ -120,12 +120,14 @@ class Symbol:
       ('auto') or in the data section ('global')
     - allocation to an immediate ('imm')"""
 
-    def __init__(self, name, stype, value=None, alloct='auto'):
+    def __init__(self, name, stype, value=None, alloct='auto', fname=''):
         self.name = name
         self.stype = stype
         self.value = value  # if not None, it is a constant
         self.alloct = alloct
         self.allocinfo = None
+        # each symbol gets the name of the function where it's defined
+        self.fname=fname
 
     def set_alloc_info(self, allocinfo):
         self.allocinfo = allocinfo

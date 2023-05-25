@@ -13,6 +13,10 @@ REG_PC = 15
 REGS_CALLEESAVE = [4, 5, 6, 7, 8, 9, 10]
 REGS_CALLERSAVE = [0, 1, 2, 3]
 
+# each time a call gets made, the caller saved and the callee saved registers
+# gets pushed on the stack, + the current frame pointer and return pointer
+CALL_OFFSET = (len(REGS_CALLEESAVE) + len(REGS_CALLERSAVE) + 2) * 4
+
 
 def get_register_string(regid):
     if regid == REG_LR:
@@ -56,7 +60,46 @@ def codegen_append(vec, code):
     return [vec[0] + code, vec[1]]
 
 
-# class RegisterAllocation:
+# If a variable needs a static link, add the correct offset to the frame pointer, put
+# the result in the scratch register and use that to reference the variable
+#
+# This workaround of using the scratch register is needed because it's impossible to
+# add directly to the frame pointer
+def check_if_variable_needs_static_link(node, symbol):
+    real_offset = static_link_analysis(node, symbol)
+
+    if real_offset > 0:
+        return '\tadd ' + get_register_string(REG_SCRATCH) + ', ' + get_register_string(REG_FP) + ', #' + str(real_offset) + '\n'
+
+
+# If a nested function uses a variable of its (grand)parent, its offset will be wrong
+# because it will be in reference to the frame pointer of the parent; this analysis finds
+# the real offset and adds instructions to correct it
+def static_link_analysis(node, symbol):
+    function_definition = node.get_function()
+
+    if symbol.allocinfo.symname.startswith("_l_") and symbol.fname != function_definition.symbol.name:
+        return get_static_link_offset(function_definition, symbol.fname, 0)
+
+    return 0
+
+
+# Recursively keep adding the offset (saved registers + local variables of the caller) of
+# each function until the specified function is found; this offset + the current frame
+# pointer will point to the frame pointer of the parent
+def get_static_link_offset(node, function_name, offset):
+    function_definition = node.get_function()
+
+    if function_definition == 'global':
+        raise RuntimeError("Main function does not have local variables")
+
+    offset += CALL_OFFSET
+    offset += function_definition.body.stackroom
+
+    if function_definition.symbol.name == function_name:
+        return offset
+
+    return get_static_link_offset(function_definition, function_name, offset)
 
 
 def enter_function_body(self, block):

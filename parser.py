@@ -14,6 +14,8 @@ class Parser:
         self.new_sym = None
         self.new_value = None
         self.the_lexer = the_lexer.tokens()
+        # keep track of the function being parsed
+        self.current_function = "main"
 
     def getsym(self):
         """Update sym"""
@@ -193,7 +195,13 @@ class Parser:
             fname = self.value
             self.expect('semicolon')
             local_vars.append(ir.Symbol(fname, ir.TYPENAMES['function']))
-            fbody = self.block(local_vars)
+
+            # make sure to save and restore the current function while parsing the new one
+            parent = self.current_function
+            self.current_function = fname
+            fbody = self.block(ir.SymbolTable(symtab[:] + local_vars))
+            self.current_function = parent
+
             self.expect('semicolon')
             defs.append(ir.FunctionDef(symbol=local_vars.find(fname), body=fbody))
         stat = self.statement(ir.SymbolTable(symtab[:] + local_vars))
@@ -205,13 +213,13 @@ class Parser:
         name = self.value
         self.expect('eql')
         self.expect('number')
-        local_vars.append(ir.Symbol(name, ir.TYPENAMES['int'], alloct=alloct), int(self.value))
+        local_vars.append(ir.Symbol(name, ir.TYPENAMES['int'], alloct=alloct, fname=self.current_function), int(self.value))
         while self.accept('comma'):
             self.expect('ident')
             name = self.value
             self.expect('eql')
             self.expect('number')
-            local_vars.append(ir.Symbol(name, ir.TYPENAMES['int'], alloct=alloct), int(self.value))
+            local_vars.append(ir.Symbol(name, ir.TYPENAMES['int'], alloct=alloct, fname=self.current_function), int(self.value))
 
     @logger
     def vardef(self, symtab, alloct='auto'):
@@ -229,9 +237,9 @@ class Parser:
             type = ir.TYPENAMES[self.value]
 
         if len(size) > 0:
-            symtab.append(ir.Symbol(name, ir.ArrayType(None, size, type), alloct=alloct))
+            symtab.append(ir.Symbol(name, ir.ArrayType(None, size, type), alloct=alloct, fname=self.current_function))
         else:
-            symtab.append(ir.Symbol(name, type, alloct=alloct))
+            symtab.append(ir.Symbol(name, type, alloct=alloct, fname=self.current_function))
 
     @logger
     def program(self):
